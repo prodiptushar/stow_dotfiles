@@ -79,9 +79,8 @@ CYGWIN* | MINGW32* | MSYS* | MINGW*)
 	;;
 esac
 
-
-alias pacs='sh $HOME/.local/bin/pacman-pkgfind.sh'
-alias yays='sh $HOME/.local/bin/yay-pkgfind.sh'
+alias pacs='$HOME/.scripts/pacman-pkgfind'
+alias yays='$HOME/.scripts/yay-pkgfind'
 alias r='lfub'
 alias e='emacsclient -c'
 alias ls=exa
