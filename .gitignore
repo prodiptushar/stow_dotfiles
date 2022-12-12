@@ -1,0 +1,4 @@
+.tmux/plugins/**
+.tmux/resurrect/**
+.config/zsh/history
+.config/zsh/history

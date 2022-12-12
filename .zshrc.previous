@@ -1,0 +1,285 @@
+# Enable colors and change prompt:
+autoload -U colors && colors PS1="%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%{$reset_color%}$%b "
+# History in cache directory:
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.local/bin/history
+# Basic auto/tab complete:
+autoload -U compinit
+zstyle ':completion:*' menu select
+zmodload zsh/complist
+compinit
+_comp_options+=(globdots)		# Include hidden files.
+# vi mode
+bindkey -v
+export KEYTIMEOUT=1
+# Use vim keys in tab complete menu:
+bindkey -M menuselect 'h' vi-backward-char
+bindkey -M menuselect 'k' vi-up-line-or-history
+bindkey -M menuselect 'l' vi-forward-char
+bindkey -M menuselect 'j' vi-down-line-or-history
+bindkey -v '^?' backward-delete-char
+# Change cursor shape for different vi modes.
+function zle-keymap-select {
+  if [[ ${KEYMAP} == vicmd ]] ||
+     [[ $1 = 'block' ]]; then
+    echo -ne '\e[1 q'
+  elif [[ ${KEYMAP} == main ]] ||
+       [[ ${KEYMAP} == viins ]] ||
+       [[ ${KEYMAP} = '' ]] ||
+       [[ $1 = 'beam' ]]; then
+    echo -ne '\e[5 q'
+  fi
+}
+zle -N zle-keymap-select
+zle-line-init() {
+    zle -K viins # initiate `vi insert` as keymap (can be removed if `bindkey -V` has been set elsewhere)
+    echo -ne "\e[5 q"
+}
+zle -N zle-line-init
+echo -ne '\e[5 q' # Use beam shape cursor on startup.
+preexec() { echo -ne '\e[5 q' ;} # Use beam shape cursor for each new prompt.
+# Use lf to switch directories and bind it to ctrl-o
+lfcd () {
+    tmp="$(mktemp)"
+    lf -last-dir-path="$tmp" "$@"
+    if [ -f "$tmp" ]; then
+        dir="$(cat "$tmp")"
+        rm -f "$tmp"
+        [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && cd "$dir"
+    fi
+}
+bindkey -s '^o' 'lfcd\n'
+# Edit line in vim with ctrl-e:
+autoload edit-command-line; zle -N edit-command-line
+bindkey '^e' edit-command-line
+# Load aliases and shortcuts if existent.
+[ -f "$HOME/.config/shortcutrc" ] && source "$HOME/.config/shortcutrc"
+[ -f "$HOME/.config/aliasrc" ] && source "$HOME/.config/aliasrc"
+# Load zsh-syntax-highlighting; should be last.
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-autocomplete/zsh-autocomplete.plugin.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-system-clipboard/zsh-system-clipboard.zsh 2>/dev/null
+
+export PATH=$HOME/.local/bin/:$PATH
+export PATH=$HOME/.emacs.d/bin/:$PATH
+export PATH=$HOME/.programs/bin/:$PATH
+
+alias pacs='sh $HOME/.local/bin/pacman-pkgfind.sh'
+alias yays='sh $HOME/.local/bin/yay-pkgfind.sh'
+#alias nvim='sudo -E nvim'
+#alias vim='sudo -E vim'
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+# __conda_setup="$('/home/prodip/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/home/prodip/anaconda3/etc/profile.d/conda.sh" ]; then
+#         . "/home/prodip/anaconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/home/prodip/anaconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
+# <<< conda initialize <<<
+eval "$(starship init zsh)"
+
+#export NNN_BMS='d:~/Documents;u:/home/user/Cam Uploads;D:~/Downloads/'
+#export NNN_SSHFS="sshfs -o follow_symlinks"        # make sshfs follow symlinks on the remote
+#export NNN_COLORS="2136"                           # use a different color for each context
+#export NNN_TRASH=1                                 # trash (needs trash-cli) instead of delete
+
+
+alias ncp="cat ${NNN_SEL:-${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection} | tr '\0' '\n'"
+export NNN_PLUG='t:tree-node-cli;p:preview-tabbed;f:finder;o:fzopen;j:autojump'
+export NNN_FIFO=/tmp/nnn.fifo
+export NNN_OPENER=/home/prodip/.config/nnn/plugins/nuke
+export EDITOR='emacsclient -c'
+export VISUAL='emacsclient -c'
+
+export PYTHONPATH=$PYTHONPATH:/usr/bin/python3.9
+#alias python3.8=/home/prodip/anaconda3/bin/python3.8
+#alias python=/usr/bin/python3.9
+alias n="neomutt"
+alias nb="newsboat"
+alias c="/usr/bin/git --git-dir=$HOME/.bareconfig/ --work-tree=$HOME"
+alias yt="ytfzf -t"
+alias pg="ping google.com"
+#alias zz="source ~/.zshrc"
+#alias backup="./code/linux/scripts/gitadd.sh"
+. /etc/profile.d/fzf.zsh
+# source ~/.zplug/init.zsh
+# zplug 'zplug/zplug', hook-build:'zplug --self-manage'
+alias cat="bat"
+bindkey -M viins 'jk' vi-cmd-mode
+bindkey -M viins 'kj' vi-cmd-mode
+bindkey '^ ' autosuggest-accept
+# eval "$(lua /home/prodip/build/z.lua/z.lua --init zsh)"
+PATH="/var/lib/snapd/snap/bin:$PATH"
+alias ls="exa"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+eval "$(fasd --init auto)"
+bindkey '^X^A' fasd-complete    # C-x C-a to do fasd-complete (files and directories)
+bindkey '^X^F' fasd-complete-f  # C-x C-f to do fasd-complete-f (only files)
+bindkey '^X^X' fasd-complete-d  # C-x C-d to do fasd-complete-d (only directories)
+alias o='f -e emacsclient -c'
+source /usr/share/nvm/init-nvm.sh
+alias sx='source x/bin/activate'
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_OPTS="--preview '(highlight -O ansi -l {} 2> /dev/null || cat {} || tree -C {}) 2> /dev/null | head -200'"
+export FZF_CTRL_R_OPTS='--sort --exact'
+fzf-history-widget-accept() {
+  fzf-history-widget
+  zle accept-line
+}
+alias e='emacsclient -c'
+zle     -N     fzf-history-widget-accept
+bindkey '^X^R' fzf-history-widget-accept
+export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200'"
+source ~/.zsh/fzf-tab.plugin.zsh
+# Enable colors and change prompt:
+autoload -U colors && colors PS1="%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%{$reset_color%}$%b "
+# History in cache directory:
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=/home/prodip/.zsh_history
+# Basic auto/tab complete:
+autoload -U compinit
+zstyle ':completion:*' menu select
+zmodload zsh/complist
+compinit
+_comp_options+=(globdots)		# Include hidden files.
+# vi mode
+bindkey -v
+export KEYTIMEOUT=1
+# Use vim keys in tab complete menu:
+bindkey -M menuselect 'h' vi-backward-char
+bindkey -M menuselect 'k' vi-up-line-or-history
+bindkey -M menuselect 'l' vi-forward-char
+bindkey -M menuselect 'j' vi-down-line-or-history
+bindkey -v '^?' backward-delete-char
+# Change cursor shape for different vi modes.
+function zle-keymap-select {
+  if [[ ${KEYMAP} == vicmd ]] ||
+     [[ $1 = 'block' ]]; then
+    echo -ne '\e[1 q'
+  elif [[ ${KEYMAP} == main ]] ||
+       [[ ${KEYMAP} == viins ]] ||
+       [[ ${KEYMAP} = '' ]] ||
+       [[ $1 = 'beam' ]]; then
+    echo -ne '\e[5 q'
+  fi
+}
+zle -N zle-keymap-select
+zle-line-init() {
+    zle -K viins # initiate `vi insert` as keymap (can be removed if `bindkey -V` has been set elsewhere)
+    echo -ne "\e[5 q"
+}
+zle -N zle-line-init
+echo -ne '\e[5 q' # Use beam shape cursor on startup.
+preexec() { echo -ne '\e[5 q' ;} # Use beam shape cursor for each new prompt.
+# Use lf to switch directories and bind it to ctrl-o
+lfcd () {
+    tmp="$(mktemp)"
+    lf -last-dir-path="$tmp" "$@"
+    if [ -f "$tmp" ]; then
+        dir="$(cat "$tmp")"
+        rm -f "$tmp"
+        [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && cd "$dir"
+    fi
+}
+bindkey -s '^o' 'lfcd\n'
+# Edit line in vim with ctrl-e:
+autoload edit-command-line; zle -N edit-command-line
+bindkey '^e' edit-command-line
+# Load aliases and shortcuts if existent.
+[ -f "$HOME/.config/shortcutrc" ] && source "$HOME/.config/shortcutrc"
+[ -f "$HOME/.config/aliasrc" ] && source "$HOME/.config/aliasrc"
+# Load zsh-syntax-highlighting; should be last.
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-autocomplete/zsh-autocomplete.plugin.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-system-clipboard/zsh-system-clipboard.zsh 2>/dev/null
+
+export PATH=$HOME/.local/bin/:$PATH
+export PATH=$HOME/.scripts/:$PATH
+export PATH=$HOME/.emacs.d/bin/:$PATH
+export PATH=$HOME/.programs/bin/:$PATH
+
+alias pacs='sh $HOME/.local/bin/pacman-pkgfind.sh'
+alias yays='sh $HOME/.local/bin/yay-pkgfind.sh'
+#alias nvim='sudo -E nvim'
+#alias vim='sudo -E vim'
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+# __conda_setup="$('/home/prodip/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/home/prodip/anaconda3/etc/profile.d/conda.sh" ]; then
+#         . "/home/prodip/anaconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/home/prodip/anaconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
+# <<< conda initialize <<<
+eval "$(starship init zsh)"
+
+#export NNN_BMS='d:~/Documents;u:/home/user/Cam Uploads;D:~/Downloads/'
+#export NNN_SSHFS="sshfs -o follow_symlinks"        # make sshfs follow symlinks on the remote
+#export NNN_COLORS="2136"                           # use a different color for each context
+#export NNN_TRASH=1                                 # trash (needs trash-cli) instead of delete
+
+
+alias ncp="cat ${NNN_SEL:-${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection} | tr '\0' '\n'"
+export NNN_PLUG='t:tree-node-cli;p:preview-tabbed;f:finder;o:fzopen;j:autojump'
+export NNN_FIFO=/tmp/nnn.fifo
+export NNN_OPENER=/home/prodip/.config/nnn/plugins/nuke
+export EDITOR='emacsclient -c'
+export VISUAL='emacsclient -c'
+
+export PYTHONPATH=$PYTHONPATH:/usr/bin/python3.9
+#alias python3.8=/home/prodip/anaconda3/bin/python3.8
+#alias python=/usr/bin/python3.9
+alias n="neomutt"
+alias nb="newsboat"
+alias c="/usr/bin/git --git-dir=$HOME/.bareconfig/ --work-tree=$HOME"
+alias yt="ytfzf -t"
+alias pg="ping google.com"
+#alias zz="source ~/.zshrc"
+alias backup="./code/linux/scripts/gitadd.sh"
+. /etc/profile.d/fzf.zsh
+# source ~/.zplug/init.zsh
+# zplug 'zplug/zplug', hook-build:'zplug --self-manage'
+alias cat="bat"
+bindkey -M viins 'jk' vi-cmd-mode
+bindkey -M viins 'kj' vi-cmd-mode
+bindkey '^ ' autosuggest-accept
+# eval "$(lua /home/prodip/build/z.lua/z.lua --init zsh)"
+PATH="/var/lib/snapd/snap/bin:$PATH"
+alias ls="exa"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+eval "$(fasd --init auto)"
+bindkey '^X^A' fasd-complete    # C-x C-a to do fasd-complete (files and directories)
+bindkey '^X^F' fasd-complete-f  # C-x C-f to do fasd-complete-f (only files)
+bindkey '^X^X' fasd-complete-d  # C-x C-d to do fasd-complete-d (only directories)
+alias o='f -e emacsclient -c'
+source /usr/share/nvm/init-nvm.sh
+alias sx='source x/bin/activate'
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_OPTS="--preview '(highlight -O ansi -l {} 2> /dev/null || cat {} || tree -C {}) 2> /dev/null | head -200'"
+export FZF_CTRL_R_OPTS='--sort --exact'
+fzf-history-widget-accept() {
+  fzf-history-widget
+  zle accept-line
+}
+alias e='emacsclient -c'
+zle     -N     fzf-history-widget-accept
+bindkey '^X^R' fzf-history-widget-accept
+export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200'"
+source ~/.zsh/fzf-tab.plugin.zsh
